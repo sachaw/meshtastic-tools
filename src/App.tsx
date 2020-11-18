@@ -3,22 +3,17 @@ import { Client } from "@meshtastic/meshtasticjs";
 import { useState } from "react";
 import JSONPretty from "react-json-pretty";
 import { useForm } from "react-hook-form";
-import {
-  ChannelSettings,
-  RadioConfig,
-  RegionCode,
-  TypeEnum,
-  UserPreferences,
-} from "@meshtastic/meshtasticjs/dist/protobuf";
+import { TypeEnum } from "@meshtastic/meshtasticjs/dist/protobuf";
 import "./main.css";
 
 const device = new Client();
 const radio = device.createBLEConnection();
 function App() {
   const { register, handleSubmit } = useForm();
+  const { register: register2, handleSubmit: handleSubmit2 } = useForm();
   const [radioData, setRadioData] = useState(undefined as any);
   const [messageHistory, setMessageHistory] = useState([]);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([] as string[]);
   radio.onConnectedEvent.subscribe((radioPacket) => {
     console.log("ConnectedEvent");
     console.log(radioPacket);
@@ -46,6 +41,13 @@ function App() {
     console.log("DataPacketEvent");
     console.log(radioPacket);
     console.log("_____");
+    let data = radioPacket;
+    if (
+      data.decoded.data.typ === TypeEnum.CLEAR_TEXT &&
+      data.decoded.data.payload instanceof Uint8Array
+    ) {
+      setMessages([...messages, txtenc.decode(data.decoded.data.payload)]);
+    }
     setRadioData(radioPacket);
   });
   radio.onUserPacketEvent.subscribe((radioPacket) => {
@@ -83,7 +85,8 @@ function App() {
   };
 
   const onBroadcastMessage = (data: any) => {
-    console.log(data);
+    radio.sendText(data.message, data.node);
+    setMessages([...messages, data.message]);
   };
   const txtenc = new TextDecoder("utf-8");
 
@@ -110,11 +113,9 @@ function App() {
           <button
             className="bg-gray-400 rounded-lg p-1 m-2 hover:bg-gray-500"
             onClick={() => {
-              radio.sendText(
-                `broadcasting message at: ${new Date().toISOString()}`,
-                undefined,
-                true
-              );
+              const message = `broadcasting message at: ${new Date().toISOString()}`;
+              radio.sendText(message, undefined, true);
+              setMessages([...messages, message]);
             }}
           >
             Send Message
@@ -213,16 +214,16 @@ function App() {
           <div className="m-2 border-2 p-2">
             <form
               className=" flex flex-col"
-              onSubmit={handleSubmit(onBroadcastMessage)}
+              onSubmit={handleSubmit2(onBroadcastMessage)}
             >
               <small>Message</small>
               <textarea
                 placeholder="message"
                 className="border mb-1"
-                name="wifiSsid"
-                ref={register}
+                name="message"
+                ref={register2}
               />
-              <select className="border mb-1">
+              <select name="node" className="border mb-1" ref={register2}>
                 {Array.from(radio.nodes.nodes).map((node) => (
                   <option key={node[1].num} value={node[1].num}>
                     {node[1].user.longName}
@@ -238,10 +239,10 @@ function App() {
 
       <div className="w-1/2 overflow-auto border-2 m-4">
         <div className="text-xl m-2 border-2 px-2">
-          {messageHistory.length ? (
-            messageHistory.map((message, index) => (
+          {messages.length ? (
+            messages.map((message, index) => (
               <p>
-                # {index}: {JSON.stringify(message).substr(0, 20)}
+                # {index}: {message}
               </p>
             ))
           ) : (
