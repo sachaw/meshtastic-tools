@@ -12,73 +12,60 @@ function App() {
   const { register, handleSubmit } = useForm();
   const { register: register2, handleSubmit: handleSubmit2 } = useForm();
   const [radioData, setRadioData] = useState(undefined as any);
-  const [messageHistory, setMessageHistory] = useState([]);
-  const [messages, setMessages] = useState([] as string[]);
+  const [messageHistory, setMessageHistory] = useState([] as any[]);
+  const [messages, setMessages] = useState(
+    [] as { message: string; from: number }[]
+  );
   radio.onConnectedEvent.subscribe((radioPacket) => {
-    console.log("ConnectedEvent");
-    console.log(radioPacket);
-    console.log("_____");
-    setRadioData({
-      isConfigDone: radioPacket.isConfigDone,
-      isConfigStarted: radioPacket.isConfigStarted,
-      isConnected: radioPacket.isConnected,
-      isReconnecting: radioPacket.isReconnecting,
+    console.log("Device connected");
+    radio.onConfigDoneEvent.subscribe((radioPacket) => {
+      console.log("ConfigDoneEvent");
+    });
+
+    radio.onDataPacketEvent.subscribe((radioPacket) => {
+      console.log("DataPacketEvent");
+      let data = radioPacket;
+      if (
+        data.decoded.data.typ === TypeEnum.CLEAR_TEXT &&
+        data.decoded.data.payload instanceof Uint8Array
+      ) {
+        const message = txtenc.decode(data.decoded.data.payload);
+        setMessages([...messages, { message, from: radio.myInfo.myNodeNum }]);
+      }
+      setRadioData(radioPacket);
+      setMessageHistory([...messageHistory, radioPacket]);
+    });
+    radio.onUserPacketEvent.subscribe((radioPacket) => {
+      console.log("UserPacketEvent");
+      setRadioData(radioPacket);
+      setMessageHistory([...messageHistory, radioPacket]);
+    });
+    radio.onPositionPacketEvent.subscribe((radioPacket) => {
+      console.log("PositionPacketEvent");
+      setRadioData(radioPacket);
+      setMessageHistory([...messageHistory, radioPacket]);
+    });
+    radio.onNodeListChangedEvent.subscribe((radioPacket) => {
+      console.log("NodeListChangeEvent");
+      setRadioData(radioPacket);
+      setMessageHistory([...messageHistory, radioPacket]);
+    });
+    radio.onFromRadioEvent.subscribe((radioPacket) => {
+      console.log("FromRadioEvent");
+      setRadioData(radioPacket);
+      setMessageHistory([...messageHistory, radioPacket]);
     });
   });
-  radio.onConfigDoneEvent.subscribe((radioPacket) => {
-    console.log("ConfigDoneEvent");
-    console.log(radioData);
-    console.log("_____");
-  });
+
   radio.onDisconnectedEvent.subscribe((radioPacket) => {
-    console.log("DisconnectedEvent");
-    console.log(radioData);
-    console.log("_____");
-    setRadioData(radioPacket);
-  });
+    console.log("Device disconnected");
 
-  radio.onDataPacketEvent.subscribe((radioPacket) => {
-    console.log("DataPacketEvent");
-    console.log(radioPacket);
-    console.log("_____");
-    let data = radioPacket;
-    if (
-      data.decoded.data.typ === TypeEnum.CLEAR_TEXT &&
-      data.decoded.data.payload instanceof Uint8Array
-    ) {
-      setMessages([...messages, txtenc.decode(data.decoded.data.payload)]);
-    }
-    setRadioData(radioPacket);
+    radio.onDataPacketEvent.cancelAll();
+    radio.onUserPacketEvent.cancelAll();
+    radio.onPositionPacketEvent.cancelAll();
+    radio.onNodeListChangedEvent.cancelAll();
+    radio.onFromRadioEvent.cancelAll();
   });
-  radio.onUserPacketEvent.subscribe((radioPacket) => {
-    console.log("UserPacketEvent");
-    console.log(radioPacket);
-    console.log("_____");
-    setRadioData(radioPacket);
-  });
-  radio.onPositionPacketEvent.subscribe((radioPacket) => {
-    console.log("PositionPacketEvent");
-    console.log(radioPacket);
-    console.log("_____");
-    setRadioData(radioPacket);
-  });
-  radio.onNodeListChangedEvent.subscribe((radioPacket) => {
-    console.log("NodeListChangeEvent");
-    console.log(radioPacket);
-    console.log("_____");
-    setRadioData(radioPacket);
-  });
-  radio.onFromRadioEvent.subscribe((radioPacket) => {
-    console.log("FromRadioEvent");
-    console.log(radioPacket);
-    console.log("_____");
-    setRadioData(radioPacket);
-  });
-
-  const pushToMessageHistory = (message: any) => {
-    console.log("a");
-    // setMessageHistory((message) => [...message, message]);
-  };
 
   const disconnect = () => {
     radio.disconnect();
@@ -86,7 +73,10 @@ function App() {
 
   const onBroadcastMessage = (data: any) => {
     radio.sendText(data.message, data.node);
-    setMessages([...messages, data.message]);
+    setMessages([
+      ...messages,
+      { message: data.message, from: radio.myInfo.myNodeNum },
+    ]);
   };
   const txtenc = new TextDecoder("utf-8");
 
@@ -96,51 +86,60 @@ function App() {
 
   return (
     <div className="App h-screen flex">
-      <div className="w-1/2 overflow-auto border-2 m-4">
+      <div className="w-1/2 overflow-auto border-2  my-2 ml-2 mr-1">
         <div className="text-xl m-2 border-2 px-2">
           Connected: <b>{radio.isConnected ? "Connected" : "Disconnected"}</b>
         </div>
         <div className="border-2 mx-2">
           <button
-            className="bg-gray-400 rounded-lg p-1 m-2 hover:bg-gray-500"
+            className="bg-gray-300 rounded-lg p-1 m-2 hover:bg-gray-400"
             onClick={() => {
-              radio.isConnected ? disconnect() : radio.connect();
+              radio.isConnected ? disconnect() : radio.connect().catch();
             }}
           >
             {radio.isConnected ? "Disconnect" : "Connect"}
           </button>
 
           <button
-            className="bg-gray-400 rounded-lg p-1 m-2 hover:bg-gray-500"
+            className="bg-gray-300 rounded-lg p-1 m-2 hover:bg-gray-400"
             onClick={() => {
               const message = `broadcasting message at: ${new Date().toISOString()}`;
               radio.sendText(message, undefined, true);
-              setMessages([...messages, message]);
+              setMessages([
+                ...messages,
+                { message, from: radio.myInfo.myNodeNum },
+              ]);
             }}
           >
             Send Message
           </button>
 
           <button
-            className="bg-gray-400 rounded-lg p-1 m-2 hover:bg-gray-500"
+            className="bg-gray-300 rounded-lg p-1 m-2 hover:bg-gray-400"
             onClick={() => {
               setRadioData(radio.radioConfig);
+              setMessageHistory([...messageHistory, radio.radioConfig]);
             }}
           >
             readConfig
           </button>
           <button
-            className="bg-gray-400 rounded-lg p-1 m-2 hover:bg-gray-500"
+            className="bg-gray-300 rounded-lg p-1 m-2 hover:bg-gray-400"
             onClick={async () => {
               setRadioData(Array.from(radio.nodes.nodes));
+              setMessageHistory([
+                ...messageHistory,
+                Array.from(radio.nodes.nodes),
+              ]);
             }}
           >
             readNodes
           </button>
           <button
-            className="bg-gray-400 rounded-lg p-1 m-2 hover:bg-gray-500"
+            className="bg-gray-300 rounded-lg p-1 m-2 hover:bg-gray-400"
             onClick={() => {
               setRadioData(radio.myInfo);
+              setMessageHistory([...messageHistory, radio.myInfo]);
             }}
           >
             readmyInfo
@@ -224,11 +223,15 @@ function App() {
                 ref={register2}
               />
               <select name="node" className="border mb-1" ref={register2}>
-                {Array.from(radio.nodes.nodes).map((node) => (
-                  <option key={node[1].num} value={node[1].num}>
-                    {node[1].user.longName}
-                  </option>
-                ))}
+                {Array.from(radio.nodes.nodes).map((node) => {
+                  if (node[1].num !== radio.myInfo.myNodeNum) {
+                    return (
+                      <option key={node[1].num} value={node[1].num}>
+                        {node[1].user.longName} ({node[1].num})
+                      </option>
+                    );
+                  }
+                })}
               </select>
 
               <input type="submit" className="cursor-pointer" value="Send" />
@@ -237,19 +240,25 @@ function App() {
         ) : undefined}
       </div>
 
-      <div className="w-1/2 overflow-auto border-2 m-4">
-        <div className="text-xl m-2 border-2 px-2">
-          {messages.length ? (
-            messages.map((message, index) => (
-              <p>
-                # {index}: {message}
+      <div className="w-1/2 overflow-auto border-2 my-2 mr-2 ml-1 flex flex-col text-xl">
+        <div className="mx-2 mt-2 border-2 px-2 overflow-auto h-24">
+          {messageHistory.length ? (
+            messageHistory.map((message, index) => (
+              <p
+                className="cursor-pointer border-b-2 truncate hover:border-black"
+                onClick={() => {
+                  setRadioData(message);
+                }}
+                key={index}
+              >
+                #{index}: {JSON.stringify(message)}
               </p>
             ))
           ) : (
-            <p>No messages</p>
+            <p>Message History</p>
           )}
         </div>
-        <div className="text-xl m-2 border-2 px-2">
+        <div className="m-2 border-2 px-2 flex-grow overflow-auto">
           <JSONPretty
             theme={{
               main: "line-height:1.3;color:#18515c;overflow:auto;",
@@ -261,6 +270,26 @@ function App() {
             }}
             data={JSON.stringify(radioData)}
           ></JSONPretty>
+        </div>
+        <div className="mx-2 mb-2 border-2 px-2 py-1 overflow-auto h-24">
+          {messages.length ? (
+            messages.map((message, index) => (
+              <p key={index}>
+                <span
+                  className={`bg-${
+                    message.from === radio.myInfo?.myNodeNum
+                      ? "blue-200"
+                      : "gray-200"
+                  } rounded-lg px-1`}
+                >
+                  {message.from}
+                </span>
+                : {message.message}
+              </p>
+            ))
+          ) : (
+            <p>No messages</p>
+          )}
         </div>
       </div>
     </div>
