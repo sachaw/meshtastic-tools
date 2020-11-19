@@ -1297,13 +1297,13 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@meshtastic/meshtasticjs@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@meshtastic/meshtasticjs/-/meshtasticjs-0.3.1.tgz#4e68106bf57f0ba5e2ca718d5bd841e811158a15"
-  integrity sha512-GG6jS5YnBWis6aOV+JuUTZhq/dXjO+fOrutVc4TxZRXTb+YoAtw7p/m1r1DlJUbydIUJ3f3tZRPnVdgms7NrCg==
+"@meshtastic/meshtasticjs@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@meshtastic/meshtasticjs/-/meshtasticjs-0.3.2.tgz#dd9aa3a337072093783e4b7f68c0e954b26993c6"
+  integrity sha512-UHz/G1uRB/VX7/gwLRi9NU7AToIkt+qHzaJjJ5UvZAb10vhGvu/e5U6jeUtV+twq/FTHYcHhPiVe+8h1o7nIHA==
   dependencies:
-    "@ungap/event-target" "^0.2.2"
-    protobufjs "^6.10.1"
+    protobufjs "^6.10.2"
+    sub-events "^1.8.6"
 
 "@nodelib/fs.scandir@2.1.3":
   version "2.1.3"
@@ -1884,11 +1884,6 @@
   dependencies:
     "@typescript-eslint/types" "4.8.1"
     eslint-visitor-keys "^2.0.0"
-
-"@ungap/event-target@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@ungap/event-target/-/event-target-0.2.2.tgz#6543122625a0a793c5fa265f45717cd096b0fb7c"
-  integrity sha512-z0bsRd8APns6CDBVEPEj3p82TiFc1UY8uWNhL+T0ydpQqnpHyPVwwgJ4FC5KP85sLbg80+g+h644UTatwKNi/g==
 
 "@webassemblyjs/ast@1.9.0":
   version "1.9.0"
@@ -8850,7 +8845,7 @@ prop-types@^15.6.2, prop-types@^15.7.2:
     object-assign "^4.1.1"
     react-is "^16.8.1"
 
-protobufjs@^6.10.1:
+protobufjs@^6.10.2:
   version "6.10.2"
   resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-6.10.2.tgz#b9cb6bd8ec8f87514592ba3fdfd28e93f33a469b"
   integrity sha512-27yj+04uF6ya9l+qfpH187aqEzfCF4+Uit0I9ZBQVqK09hk/SQzKa2MUqUpXaVa7LOFRg1TSSr3lVxGOk6c0SQ==
@@ -10368,6 +10363,11 @@ stylehacks@^4.0.0:
     browserslist "^4.0.0"
     postcss "^7.0.0"
     postcss-selector-parser "^3.0.0"
+
+sub-events@^1.8.6:
+  version "1.8.6"
+  resolved "https://registry.yarnpkg.com/sub-events/-/sub-events-1.8.6.tgz#16c45a2bd52e9a1befebefc498ec73713a80fac5"
+  integrity sha512-0DEfA34Gcw3QOF99DEEtLMDdHKgD37wNFbjgromvX1XFqNxQwLUpYqKSm3+71oG0jO8RHltULc0aaVxDW+B0og==
 
 supports-color@^5.3.0, supports-color@^5.4.0:
   version "5.5.0"
